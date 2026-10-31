@@ -34,6 +34,7 @@ const state = {
   gmapAvatarMarker: null,
   gmapInfoWindow: null,
 };
+const API_BASE_URL = "https://campus-navigation-agent.onrender.com";
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyDRzIaIEFgXFm-boEOQBtmb9xFBCfResyk";
 
