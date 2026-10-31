@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // --- API DATA FETCHING ---
 async function loadCampusGraph() {
   try {
-    const res = await fetch("/api/graph");
+    const res = await fetch(`${API_BASE_URL}/api/graph`);
     state.graph = await res.json();
     populateDropdowns();
     renderCampusSvg();
@@ -177,7 +177,7 @@ async function loadCampusGraph() {
 
 async function loadEnvironmentData() {
   try {
-    const res = await fetch("/api/environment");
+    const res = await fetch(`${API_BASE_URL}/api/environment`);
     const data = await res.json();
     renderPeasModal(data.peas, data.classifications);
   } catch (err) {
@@ -476,7 +476,7 @@ async function executeSearch() {
 
 async function findNearest(facilityType) {
   try {
-    const res = await fetch("/api/nearest", {
+    const res = await fetch(`${API_BASE_URL}/api/nearest`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -784,7 +784,7 @@ function pauseAnimation() {
 // --- OBSTACLE & DYNAMIC CONTROLS ---
 async function toggleBlock(type, u, v, blocked) {
   try {
-    const res = await fetch("/api/toggle-block", {
+    const res = await fetch(`${API_BASE_URL}/api/toggle-block`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -818,7 +818,9 @@ async function addRandomObstacle() {
 
 async function resetAllObstacles() {
   try {
-    const res = await fetch("/api/reset-blocks", { method: "POST" });
+    const res = await fetch(`${API_BASE_URL}/api/reset-blocks`, {
+      method: "POST",
+    });
     const data = await res.json();
     if (data.status === "success") {
       state.graph = data.graph;
@@ -840,7 +842,7 @@ async function toggleRushHour() {
     .classList.toggle("active", state.isRushHour);
 
   try {
-    const res = await fetch("/api/simulate-rush-hour", {
+    const res = await fetch(`${API_BASE_URL}/api/simulate-rush-hour`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: state.isRushHour }),
@@ -1066,7 +1068,7 @@ async function openBenchmarkModal() {
   tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--accent-cyan); padding: 18px;">Running benchmark simulation across all algorithms...</td></tr>`;
 
   try {
-    const res = await fetch("/api/compare-all", {
+    const res = await fetch(`${API_BASE_URL}/api/compare-all`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1178,7 +1180,7 @@ async function runPartialObservabilitySim() {
   out.textContent = "Simulating agent movement with local sensor horizon...";
 
   try {
-    const res = await fetch("/api/simulate-partial", {
+    const res = await fetch(`${API_BASE_URL}/api/simulate-partial`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
