@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIT University Campus Navigation Agent | Graph AI & Search Visualizer</title>
+  <meta name="description" content="AI-powered campus pathfinding agent for DIT University Dehradun implementing BFS, DFS, A*, and Dijkstra with multi-objective optimization (distance, travel time, accessibility, crowd density) and step-by-step search inspector.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top App Navigation Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-icon">🧭</div>
+      <div class="brand-text">
+        <h1>DIT University Campus Navigator</h1>
+        <div style="font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.5px;">Mussoorie Diversion Road, Dehradun</div>
+      </div>
+      <span class="brand-badge" id="system-status-badge">AI Graph Engine Active</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-header" id="btn-toggle-weather" title="Toggle Campus Weather: Fair vs Rain Mode (Sheltered Walkways)">
+        <span id="weather-icon">☀️</span> Weather: <strong id="weather-status-text">Fair</strong>
+      </button>
+
+      <button class="btn-header" id="btn-toggle-rush" title="Simulate class-change rush hour crowds">
+        <span>👥</span> Rush Hour: <strong id="rush-status-text">OFF</strong>
+      </button>
+
+      <button class="btn-header" id="btn-random-obstacle" title="Simulate a sudden corridor obstruction">
+        <span>🚧</span> Add Obstacle
+      </button>
+
+      <button class="btn-header" id="btn-reset-map" title="Clear all blocked paths and reset crowds">
+        <span>🧹</span> Clear Blocks
+      </button>
+
+      <button class="btn-header" id="btn-open-benchmark" title="Compare all algorithms side-by-side">
+        <span>📊</span> Benchmark
+      </button>
+
+      <button class="btn-header" id="btn-open-peas" title="View PEAS analysis & 6-dimension environment classification">
+        <span>🧠</span> AI Environment
+      </button>
+
+      <button class="btn-header" id="btn-open-export" title="Export printable turn-by-turn directions pass">
+        <span>📋</span> Export Pass
+      </button>
+
+      <button class="btn-header" id="btn-theme-toggle" title="Toggle Dark/Light Mode">
+        <span id="theme-icon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <main class="app-container">
+
+    <!-- Left Controls Panel -->
+    <aside class="panel-card" id="left-control-panel">
+      <div class="card-title">
+        <span>Navigation Parameters</span>
+        <span class="icon">⚙️</span>
+      </div>
+
+      <!-- Endpoint Selectors -->
+      <div class="form-group" style="margin-bottom: 8px;">
+        <input type="text" class="form-select" id="input-filter-nodes" placeholder="🔍 Filter 50 DIT campus places..." style="font-size: 0.8rem; padding: 6px 12px; background: rgba(0,0,0,0.25);">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="select-start-node">
+          <span>Start Location</span>
+          <span style="color: var(--accent-cyan); font-weight:700;">● Source</span>
+        </label>
+        <select class="form-select" id="select-start-node"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="select-goal-node">
+          <span>Destination</span>
+          <span style="color: var(--accent-emerald); font-weight:700;">🚩 Target</span>
+        </label>
+        <select class="form-select" id="select-goal-node"></select>
+      </div>
+
+      <!-- Optional Intermediate Waypoint -->
+      <div class="form-group">
+        <label class="form-label" for="select-via-node">
+          <span>Intermediate Stopover (Optional)</span>
+          <span style="color: var(--accent-amber); font-weight:700;">📍 Via</span>
+        </label>
+        <select class="form-select" id="select-via-node">
+          <option value="">None (Direct Route)</option>
+        </select>
+      </div>
+
+      <!-- Quick AI Nearest Facility Finder -->
+      <div class="form-group">
+        <label class="form-label">
+          <span>Find Nearest From Source</span>
+          <span style="color: var(--accent-cyan); font-weight:700;">⚡ Quick AI</span>
+        </label>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;" id="quick-find-buttons">
+          <button class="chip-btn btn-quick-find" data-facility="food" title="Find nearest Cafeteria or Canteen">🍽️ Food</button>
+          <button class="chip-btn btn-quick-find" data-facility="medical" title="Find nearest Clinic or Pharmacy">🏥 Clinic</button>
+          <button class="chip-btn btn-quick-find" data-facility="atm" title="Find nearest ATM">🏧 ATM</button>
+          <button class="chip-btn btn-quick-find" data-facility="lab" title="Find nearest Laboratory">🔬 Lab</button>
+          <button class="chip-btn btn-quick-find" data-facility="library" title="Find nearest Library or Bookshop">📚 Library</button>
+          <button class="chip-btn btn-quick-find" data-facility="gate" title="Find nearest Campus Exit Gate">🚪 Exit</button>
+        </div>
+      </div>
+
+      <!-- Algorithm Selector Chips -->
+      <div class="form-group">
+        <label class="form-label">Search Algorithm</label>
+        <div class="algo-chips" id="algo-chip-group">
+          <button class="chip-btn active" data-algo="A*" title="A* with Euclidean Distance Heuristic">A* (Dist)</button>
+          <button class="chip-btn" data-algo="A*_Time" title="A* with Admissible Time Heuristic">A* (Time)</button>
+          <button class="chip-btn" data-algo="BFS" title="Breadth-First Search (Fewest Hops)">BFS</button>
+          <button class="chip-btn" data-algo="DFS" title="Depth-First Search (Deep Traversal)">DFS</button>
+          <button class="chip-btn" data-algo="Dijkstra" title="Dijkstra / Uniform Cost Search (f = g)">Dijkstra</button>
+          <button class="chip-btn" data-algo="Greedy" title="Greedy Best-First Search (f = h)">Greedy</button>
+        </div>
+      </div>
+
+      <!-- Routing Criteria / Preference (Advanced Feature) -->
+      <div class="form-group">
+        <label class="form-label">Optimization Criteria</label>
+        <div class="preference-grid" id="pref-grid" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="pref-card active" data-pref="distance" title="Minimize physical walking distance">
+            <span class="pref-title">📏 Distance</span>
+            <span class="pref-desc">Shortest spatial path</span>
+          </div>
+          <div class="pref-card" data-pref="time" title="Minimize total travel time factoring speed & stairs">
+            <span class="pref-title">⏱️ Fastest Time</span>
+            <span class="pref-desc">Optimal transit speed</span>
+          </div>
+          <div class="pref-card" data-pref="accessibility" title="100% Wheelchair accessible (No stairs, elevators only)">
+            <span class="pref-title">♿ Accessible</span>
+            <span class="pref-desc">Zero stairs / ADA ramps</span>
+          </div>
+          <div class="pref-card" data-pref="crowd" title="Avoid congested cafeterias and busy hallways">
+            <span class="pref-title">👥 Low Crowd</span>
+            <span class="pref-desc">Bypass peak congestion</span>
+          </div>
+          <div class="pref-card" data-pref="shelter" title="Rain Mode: Prioritize indoor hallways, covered skybridges and elevators" style="grid-column: span 2;">
+            <span class="pref-title">🌧️ Sheltered (Rain Mode)</span>
+            <span class="pref-desc">Avoid outdoor rain, use indoor corridors & skybridges</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Find Route Button -->
+      <button class="btn-primary" id="btn-run-search">
+        <span>⚡ Calculate Optimal Route</span>
+      </button>
+
+      <!-- Walk Simulation Action -->
+      <div style="margin-top: 8px;">
+        <button class="btn-primary" id="btn-simulate-walk" style="width: 100%; background: #059669; padding: 8px 10px; font-size: 0.8rem;" title="Simulate a pedestrian avatar moving along the route">
+          <span>🚶 Simulate Walk Route</span>
+        </button>
+      </div>
+
+      <!-- Tip Callout -->
+      <div style="font-size: 0.72rem; color: var(--text-dim); line-height: 1.4; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+        💡 <strong>Interactive Map Tip:</strong> Left-click any location on the map to set Start or Goal. Right-click any location or pathway to block it as an obstacle!
+      </div>
+    </aside>
+
+    <!-- Center Interactive Map Canvas & Stepper -->
+    <section class="map-viewport-container" id="map-section">
+      <!-- Map Header & Legend -->
+      <div class="map-toolbar">
+        <div class="map-view-toggle">
+          <button class="chip-btn active" id="btn-view-blueprint" title="Vector Campus Blueprint Canvas">🧭 Blueprint</button>
+          <button class="chip-btn" id="btn-view-google-maps" title="Official Google Maps Satellite & Road View">🗺️ Google Maps</button>
+        </div>
+
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-dot" style="background: #0284c7;"></span> Start</div>
+          <div class="legend-item"><span class="legend-dot" style="background: #10b981;"></span> Goal</div>
+          <div class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span> Expanding</div>
+          <div class="legend-item"><span class="legend-dot" style="background: #06b6d4;"></span> Open</div>
+          <div class="legend-item"><span class="legend-dot" style="background: #8b5cf6;"></span> Closed</div>
+          <div class="legend-item"><span class="legend-line" style="background: #ef4444;"></span> Obstacle</div>
+        </div>
+
+        <div style="font-size: 0.76rem; color: var(--text-muted);" id="current-action-display">
+          Ready for path planning
+        </div>
+      </div>
+
+      <!-- SVG Map Canvas (1000 x 700 coordinate box) -->
+      <svg class="campus-svg-canvas" id="campus-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet">
+        <!-- Defined filters and gradients -->
+        <defs>
+          <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+
+        <!-- Campus Background Zones / Buildings -->
+        <g id="svg-zones-layer"></g>
+
+        <!-- Pathways / Edges Layer -->
+        <g id="svg-edges-layer"></g>
+
+        <!-- Final Route Highlight Layer -->
+        <g id="svg-route-layer"></g>
+
+        <!-- Nodes / Waypoints Layer -->
+        <g id="svg-nodes-layer"></g>
+
+        <!-- Agent Marker -->
+        <g id="svg-agent-layer"></g>
+      </svg>
+
+      <!-- Google Maps Viewport Container -->
+      <div id="google-map-container" class="google-map-canvas" style="display: none;">
+        <div class="gmap-banner-status" id="gmap-status-pill">🗺️ Google Maps: AI Pathfinding Active</div>
+        <div id="google-map-mount" style="width: 100%; height: 100%;"></div>
+      </div>
+
+      <!-- Stepper & Animation Controls Bar -->
+      <div class="map-stepper-bar">
+        <div class="stepper-buttons">
+          <button class="btn-control" id="btn-step-prev" title="Step Back">⏮</button>
+          <button class="btn-control btn-play-pause" id="btn-play-pause" title="Play / Pause Search Visualizer">▶</button>
+          <button class="btn-control" id="btn-step-next" title="Step Forward">⏭</button>
+          <button class="btn-control" id="btn-step-reset" title="Reset to Beginning">🔄</button>
+        </div>
+
+        <div class="step-slider-container">
+          <input type="range" class="step-slider" id="step-scrubber" min="0" max="0" value="0">
+          <div class="step-indicator-text" id="step-counter-text">Step 0 / 0</div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase;">Speed:</span>
+          <button class="chip-btn active" id="btn-speed-toggle" style="padding: 4px 8px; font-size: 0.75rem;">1x</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Analytics & Inspector Panel -->
+    <aside class="panel-card" id="right-inspector-panel">
+      <div class="card-title">
+        <span>Route Metrics & Telemetry</span>
+        <span class="icon">📈</span>
+      </div>
+
+      <!-- Performance Metrics Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <span class="metric-label">Total Distance</span>
+          <span class="metric-value cyan" id="metric-dist">0.0 m</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Travel Time</span>
+          <span class="metric-value emerald" id="metric-time">0.0 s</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Nodes Expanded</span>
+          <span class="metric-value amber" id="metric-expanded">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Execution Time</span>
+          <span class="metric-value" id="metric-exec">0.0 ms</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Estimated Steps</span>
+          <span class="metric-value" style="color: #c084fc;" id="metric-steps">0 steps</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Active Calories</span>
+          <span class="metric-value" style="color: #f43f5e;" id="metric-calories">0.0 kcal</span>
+        </div>
+      </div>
+
+      <!-- Mobility & Congestion Badges -->
+      <div style="display: flex; gap: 8px;">
+        <div class="status-badge success" id="badge-accessibility" style="flex: 1; text-align: center; padding: 6px;">
+          ♿ Wheelchair Accessible
+        </div>
+        <div class="status-badge" id="badge-crowd" style="flex: 1; text-align: center; padding: 6px; background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan);">
+          👥 Crowd: 1.0x (Free)
+        </div>
+      </div>
+
+      <!-- Live Search Inspector (Open List & Closed List) -->
+      <div class="card-title" style="margin-top: 4px;">
+        <span>Live Search Inspector</span>
+        <span class="icon">🔬</span>
+      </div>
+
+      <div class="inspector-tabs">
+        <button class="tab-btn active" id="tab-open-list" data-tab="open">Open List (Frontier)</button>
+        <button class="tab-btn" id="tab-closed-list" data-tab="closed">Closed List (Explored)</button>
+      </div>
+
+      <!-- Open List Table -->
+      <div class="inspector-table-wrapper" id="open-list-view">
+        <table class="inspector-table">
+          <thead>
+            <tr>
+              <th>Node</th>
+              <th>f(n)</th>
+              <th>g(n)</th>
+              <th>h(n)</th>
+            </tr>
+          </thead>
+          <tbody id="open-list-tbody">
+            <tr><td colspan="4" style="color: var(--text-dim); text-align: center;">Execute search to view frontier items</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Closed List Sequence -->
+      <div class="inspector-table-wrapper" id="closed-list-view" style="display: none; padding: 10px;">
+        <div id="closed-list-tags" style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <span style="color: var(--text-dim); font-size: 0.75rem;">No nodes explored yet.</span>
+        </div>
+      </div>
+
+      <!-- Turn-by-Turn Leg Breakdown -->
+      <div class="card-title" style="margin-top: 4px;">
+        <span>Turn-by-Turn Waypoints</span>
+        <span class="icon">📍</span>
+      </div>
+
+      <div class="route-legs-list" id="route-legs-container">
+        <div style="color: var(--text-dim); font-size: 0.78rem; text-align: center; padding: 14px;">
+          No active route calculated.
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Algorithm Benchmark Modal -->
+  <div class="modal-overlay" id="modal-benchmark">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Algorithm Benchmark & Comparison</h2>
+        <button class="btn-close-modal" data-close="modal-benchmark">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.88rem; color: var(--text-muted);">
+          Side-by-side performance comparison of BFS, DFS, A* (Distance), A* (Time), Dijkstra, and Greedy Best-First on the currently selected route endpoints.
+        </p>
+
+        <table class="comparison-table" id="benchmark-table">
+          <thead>
+            <tr>
+              <th>Algorithm</th>
+              <th>Status</th>
+              <th>Distance</th>
+              <th>Travel Time</th>
+              <th>Nodes Expanded</th>
+              <th>Frontier Max</th>
+              <th>Runtime</th>
+            </tr>
+          </thead>
+          <tbody id="benchmark-tbody">
+            <tr><td colspan="7" style="text-align: center;">Loading benchmark comparisons...</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Analysis Callout -->
+        <div style="background: var(--bg-primary); padding: 14px; border-radius: 10px; border: 1px solid var(--border-subtle); font-size: 0.82rem; line-height: 1.5; color: var(--text-muted);">
+          <strong style="color: var(--accent-cyan);">A* vs BFS/DFS Insight:</strong>
+          A* with an admissible heuristic strictly minimizes the number of explored states while guaranteeing optimal path cost. BFS explores nodes uniformly in concentric circles (high node expansion), DFS dives deep without optimality guarantees, and Greedy Best-First can be tricked into detours by local heuristic traps.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Environment Classification & PEAS Modal -->
+  <div class="modal-overlay" id="modal-peas">
+    <div class="modal-box" style="max-width: 900px;">
+      <div class="modal-header">
+        <h2>AI Agent Environment & PEAS Analysis</h2>
+        <button class="btn-close-modal" data-close="modal-peas">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- PEAS Section -->
+        <h3 style="font-size: 1.05rem; color: var(--accent-cyan); display: flex; align-items: center; gap: 8px;">
+          <span>🎯</span> PEAS Formal Specification
+        </h3>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" id="peas-container"></div>
+
+        <!-- 6-Dimension Environment Classification -->
+        <h3 style="font-size: 1.05rem; color: var(--accent-emerald); display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+          <span>🌐</span> Russell & Norvig 6-Dimension Environment Classification
+        </h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;" id="env-classification-container"></div>
+
+        <!-- Partial Observability & Dynamic Replanning Simulation -->
+        <div style="background: var(--bg-primary); padding: 16px; border-radius: 12px; border: 1px solid var(--border-subtle); margin-top: 8px;">
+          <h4 style="color: var(--accent-amber); margin-bottom: 6px;">
+            🧪 Test Partial Observability & Online Replanning
+          </h4>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+            Simulates an agent navigating with local sensor range. When the agent arrives at a junction and discovers an unexpected hallway blockage, it triggers real-time A* replanning.
+          </p>
+          <button class="btn-primary" id="btn-run-partial-sim" style="width: auto; padding: 8px 16px; font-size: 0.82rem;">
+            Run Partial Observability Simulation
+          </button>
+          <div id="partial-sim-output" style="margin-top: 10px; font-size: 0.8rem; font-family: var(--font-mono); color: var(--accent-cyan);"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Route Directions Modal -->
+  <div class="modal-overlay" id="modal-export">
+    <div class="modal-box" style="max-width: 620px;">
+      <div class="modal-header">
+        <h2>DIT University Travel Pass & Directions</h2>
+        <button class="btn-close-modal" data-close="modal-export">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="export-pass-content" style="background: var(--bg-primary); padding: 18px; border-radius: 12px; border: 1px solid var(--border-subtle); font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; white-space: pre-wrap; max-height: 420px; overflow-y: auto;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px;">
+          <button class="btn-primary" id="btn-copy-directions" style="width: auto; padding: 8px 16px;">📋 Copy to Clipboard</button>
+          <button class="btn-primary" id="btn-print-directions" style="width: auto; padding: 8px 16px; background: #475569;">🖨️ Print Pass</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
