@@ -3,7 +3,7 @@
  * Implements SVG campus rendering, live step-by-step search visualization,
  * open/closed list inspection, dynamic obstacles, and multi-objective routing.
  */
-
+const API_BASE_URL = "https://campus-navigation-agent.onrender.com";
 // Application State
 const state = {
   graph: { nodes: [], edges: [] },
@@ -34,7 +34,6 @@ const state = {
   gmapAvatarMarker: null,
   gmapInfoWindow: null,
 };
-const API_BASE_URL = "https://campus-navigation-agent.onrender.com";
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyDRzIaIEFgXFm-boEOQBtmb9xFBCfResyk";
 
